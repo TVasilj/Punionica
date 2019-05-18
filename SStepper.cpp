@@ -24,6 +24,7 @@ SStepper::~SStepper(){
 }
 
 void SStepper::setDirectionClockWise(bool dir) {
+  cli();                                  //stop interrupts
   if (dir) {                              // true - direction clockwise
     if (_clockWiseDirection == LOW) {     // if clockwise direction is LOW vale on output
       digitalWrite(_dirPin, LOW);         // set direction pin to LOW
@@ -36,6 +37,9 @@ void SStepper::setDirectionClockWise(bool dir) {
     } else {                              // if clockwise direction is LOW vale on output
       digitalWrite(_dirPin, LOW);         // set direction pin to LOW
     }
+  }
+  if (_status) {                          // if motor enabled, trigger step
+    sei();                                // allow interrupts
   }
 }
 
@@ -51,9 +55,7 @@ void SStepper::setStatusEnabled(bool status) {
     }
 
     sei();			                          // allow interrupts					                
-  } else {                                // false - motor disabled   
-    cli();                                //stop interrupts             
-    
+  } else {                                // false - motor disabled                 
     if (_enabledState == LOW) {           // if motor enabled is LOW vale on output
       digitalWrite(_enablePin, HIGH);     // set enable pin to HIGH
     } else {                              // if motor enabled is HIGH vale on output
@@ -116,13 +118,8 @@ void SStepper::setupTimer1Interupt(int64_t prescaler, int64_t steps_rev, int64_t
 }
 
 void SStepper::setRpm(int64_t prescaler, int64_t steps_rev, int64_t rpm) {
-  // stop interrupts  
-  cli();   
   //initialize counter value to 0                                               
   TCNT1 = 0;
   // sets comapre registar to desired value for received rpm                                         
   OCR1A = (uint32_t)((16000000.0 / prescaler) / (steps_rev * (rpm / 60.0))) - 1;
-  //Serial.println((uint32_t)((16000000.0 / prescaler) / (steps_rev * (rpm / 60.0))) - 1);
-  //allow interrupts
-  sei();
 }
